@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Jon",
+    "email": "jon@email.com",
+    "password": "admin",
+    "role": "procurement"
+  },
+  {
+    "name": "bob",
+    "email": "bob@email.com",
+    "password": "admin",
+    "role": "vendor"
+  }
+]

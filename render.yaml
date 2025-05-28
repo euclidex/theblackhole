@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: the-black-hole-api
+    env: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: the-black-hole
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://the-black-hole-api.onrender.com 
