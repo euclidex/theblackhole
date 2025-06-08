@@ -731,7 +731,22 @@ const VendorDashboard = () => {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static">
+      <AppBar position="static" sx={{
+        background: `
+          radial-gradient(circle at center,
+            #666666 0%,
+            #4a4a4a 50%,
+            #333333 100%
+          ),
+          linear-gradient(45deg,
+            rgba(255,255,255,0.1) 0%,
+            rgba(255,255,255,0.05) 100%
+          )
+        `,
+        backgroundBlend: 'overlay',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+        borderBottom: '3px solid #1976d2'  // Material-UI's default blue
+      }}>
         <Toolbar>
           <CycloneIcon sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>

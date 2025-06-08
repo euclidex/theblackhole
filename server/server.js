@@ -11,7 +11,11 @@ app.use(cors());
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
+  });
   next();
 });
 
@@ -31,10 +35,19 @@ if (process.env.NODE_ENV === 'production') {
   const staticPath = path.join(__dirname, '../client/build');
   console.log('Serving static files from:', staticPath);
   
-  app.use(express.static(staticPath));
+  app.use(express.static(staticPath, {
+    maxAge: '0', // Disable caching for static files
+    etag: false,
+    lastModified: false
+  }));
 
   // Handle React routing by serving index.html for non-API routes
   app.get(/^(?!\/api).*/, (req, res) => {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.sendFile(path.join(staticPath, 'index.html'));
   });
 }

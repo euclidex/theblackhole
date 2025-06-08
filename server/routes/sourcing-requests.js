@@ -11,18 +11,31 @@ let sourcingRequests = [];
 try {
   const data = fs.readFileSync(SOURCING_REQUESTS_FILE, 'utf-8');
   sourcingRequests = JSON.parse(data);
+  console.log(`Loaded ${sourcingRequests.length} sourcing requests from file`);
 } catch (err) {
-  console.error('Could not load sourcing_requests.json. Using empty list.');
+  console.error('Could not load sourcing_requests.json:', err);
   sourcingRequests = [];
 }
 
 // Helper to save sourcing requests
 const saveSourcingRequests = () => {
-  fs.writeFileSync(SOURCING_REQUESTS_FILE, JSON.stringify(sourcingRequests, null, 2));
+  try {
+    fs.writeFileSync(SOURCING_REQUESTS_FILE, JSON.stringify(sourcingRequests, null, 2));
+    console.log(`Saved ${sourcingRequests.length} sourcing requests to file`);
+  } catch (err) {
+    console.error('Error saving sourcing requests:', err);
+  }
 };
 
 // Get all sourcing requests
 router.get('/', (req, res) => {
+  console.log('GET /api/sourcing-requests - Total requests:', sourcingRequests.length);
+  console.log('Open requests:', sourcingRequests.filter(r => r.status?.toLowerCase() === 'open').length);
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   res.json(sourcingRequests);
 });
 
@@ -52,6 +65,7 @@ router.post('/', (req, res) => {
     saveSourcingRequests();
     res.status(201).json(newRequest);
   } catch (error) {
+    console.error('Error creating sourcing request:', error);
     res.status(500).json({ message: 'Error creating sourcing request' });
   }
 });
@@ -70,6 +84,7 @@ router.put('/:id', (req, res) => {
     saveSourcingRequests();
     res.json(sourcingRequests[index]);
   } catch (error) {
+    console.error('Error updating sourcing request:', error);
     res.status(500).json({ message: 'Error updating sourcing request' });
   }
 });
@@ -88,6 +103,7 @@ router.delete('/:id', (req, res) => {
     saveSourcingRequests();
     res.status(204).send();
   } catch (error) {
+    console.error('Error deleting sourcing request:', error);
     res.status(500).json({ message: 'Error deleting sourcing request' });
   }
 });
