@@ -1,32 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
-const jwt = require('jsonwebtoken');
 const { authenticateToken } = require('../middleware/auth');
-
-const SOURCING_REQUESTS_FILE = path.join(__dirname, '..', 'sourcing_requests.json');
-
-// Read sourcing requests from JSON file
-let sourcingRequests = [];
-try {
-  const data = fs.readFileSync(SOURCING_REQUESTS_FILE, 'utf-8');
-  sourcingRequests = JSON.parse(data);
-  console.log(`Loaded ${sourcingRequests.length} sourcing requests from file`);
-} catch (err) {
-  console.error('Could not load sourcing_requests.json:', err);
-  sourcingRequests = [];
-}
-
-// Helper to save sourcing requests
-const saveSourcingRequests = () => {
-  try {
-    fs.writeFileSync(SOURCING_REQUESTS_FILE, JSON.stringify(sourcingRequests, null, 2));
-    console.log(`Saved ${sourcingRequests.length} sourcing requests to file`);
-  } catch (err) {
-    console.error('Error saving sourcing requests:', err);
-  }
-};
+const sourcingRequestsService = require('../services/sourcing-requests');
 
 // Get all sourcing requests
 router.get('/', authenticateToken, (req, res) => {
@@ -34,20 +9,22 @@ router.get('/', authenticateToken, (req, res) => {
     console.log('GET /sourcing-requests');
     console.log('User:', req.user);
     
+    // Get all requests
+    const allRequests = sourcingRequestsService.getAllRequests();
+    
     // Filter requests based on user role
     let filteredRequests;
     if (req.user.role === 'vendor') {
       console.log('Filtering requests for vendor');
       // Return requests that are either open or have proposals from this vendor
-      filteredRequests = sourcingRequests.filter(request => 
+      filteredRequests = allRequests.filter(request => 
         request.status?.toLowerCase() === 'open' ||
         request.proposals?.some(p => p.vendorId === req.user.email)
       );
-      console.log(`Found ${filteredRequests.length} relevant requests out of ${sourcingRequests.length} total`);
-      console.log('Status values found:', sourcingRequests.map(r => r.status));
+      console.log(`Found ${filteredRequests.length} relevant requests out of ${allRequests.length} total`);
     } else {
       console.log('Returning all requests for procurement officer');
-      filteredRequests = sourcingRequests;
+      filteredRequests = allRequests;
     }
 
     // Add cache control headers
@@ -61,11 +38,9 @@ router.get('/', authenticateToken, (req, res) => {
     res.json(filteredRequests);
   } catch (error) {
     console.error('Error in GET /sourcing-requests:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack
+    res.status(500).json({ 
+      message: error.message || 'Error fetching sourcing requests'
     });
-    res.status(500).json({ message: 'Error fetching sourcing requests', error: error.message });
   }
 });
 
@@ -73,7 +48,7 @@ router.get('/', authenticateToken, (req, res) => {
 router.get('/:id', authenticateToken, (req, res) => {
   try {
     console.log(`GET /sourcing-requests/${req.params.id}`);
-    const request = sourcingRequests.find(r => r.id === req.params.id);
+    const request = sourcingRequestsService.getRequestById(req.params.id);
     if (!request) {
       console.log('Request not found');
       return res.status(404).json({ message: 'Request not found' });
@@ -82,7 +57,9 @@ router.get('/:id', authenticateToken, (req, res) => {
     res.json(request);
   } catch (error) {
     console.error('Error in GET /sourcing-requests/:id:', error);
-    res.status(500).json({ message: 'Error fetching sourcing request', error: error.message });
+    res.status(500).json({ 
+      message: error.message || 'Error fetching sourcing request'
+    });
   }
 });
 
@@ -113,13 +90,18 @@ router.post('/', authenticateToken, (req, res) => {
       proposals: []
     };
 
-    sourcingRequests.push(newRequest);
-    saveSourcingRequests();
-    console.log('Created new request:', newRequest);
-    res.status(201).json(newRequest);
+    const savedRequest = sourcingRequestsService.createRequest(newRequest);
+    if (!savedRequest) {
+      throw new Error('Failed to save request');
+    }
+
+    console.log('Created new request:', savedRequest);
+    res.status(201).json(savedRequest);
   } catch (error) {
     console.error('Error in POST /sourcing-requests:', error);
-    res.status(500).json({ message: 'Error creating sourcing request', error: error.message });
+    res.status(500).json({ 
+      message: error.message || 'Error creating sourcing request'
+    });
   }
 });
 
@@ -134,21 +116,18 @@ router.put('/:id', authenticateToken, (req, res) => {
       return res.status(403).json({ message: 'Only procurement officers can update requests' });
     }
 
-    const { id } = req.params;
-    const index = sourcingRequests.findIndex(r => r.id === id);
-    
-    if (index === -1) {
-      console.log('Request not found');
-      return res.status(404).json({ message: 'Request not found' });
+    const updatedRequest = sourcingRequestsService.updateRequest(req.params.id, req.body);
+    if (!updatedRequest) {
+      throw new Error('Failed to update request');
     }
 
-    sourcingRequests[index] = { ...sourcingRequests[index], ...req.body };
-    saveSourcingRequests();
-    console.log('Updated request:', sourcingRequests[index]);
-    res.json(sourcingRequests[index]);
+    console.log('Updated request:', updatedRequest);
+    res.json(updatedRequest);
   } catch (error) {
     console.error('Error in PUT /sourcing-requests/:id:', error);
-    res.status(500).json({ message: 'Error updating sourcing request', error: error.message });
+    res.status(500).json({ 
+      message: error.message || 'Error updating sourcing request'
+    });
   }
 });
 
@@ -161,36 +140,17 @@ router.delete('/:id', authenticateToken, (req, res) => {
       return res.status(403).json({ message: 'Only procurement officers can delete requests' });
     }
 
-    const { id } = req.params;
-    const index = sourcingRequests.findIndex(r => r.id === id);
-    
-    if (index === -1) {
-      console.log('Request not found');
-      return res.status(404).json({ message: 'Request not found' });
+    const deletedRequest = sourcingRequestsService.deleteRequest(req.params.id);
+    if (!deletedRequest) {
+      throw new Error('Failed to delete request');
     }
 
-    // Store the request before deleting it
-    const deletedRequest = sourcingRequests[index];
-    console.log('Deleting request:', deletedRequest);
-
-    // Remove the request from the array
-    sourcingRequests.splice(index, 1);
-    
-    // Save the updated array
-    try {
-      saveSourcingRequests();
-      console.log('Successfully deleted request and saved changes');
-      res.status(200).json({ message: 'Request deleted successfully', deletedRequest });
-    } catch (saveError) {
-      // If saving fails, add the request back to the array
-      sourcingRequests.splice(index, 0, deletedRequest);
-      throw saveError;
-    }
+    console.log('Successfully deleted request:', deletedRequest);
+    res.status(200).json({ message: 'Request deleted successfully', deletedRequest });
   } catch (error) {
     console.error('Error in DELETE /sourcing-requests/:id:', error);
     res.status(500).json({ 
-      message: 'Error deleting sourcing request',
-      error: error.message 
+      message: error.message || 'Error deleting sourcing request'
     });
   }
 });
