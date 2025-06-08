@@ -19,6 +19,7 @@ const VendorDashboard = () => {
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [proposalsFilter, setProposalsFilter] = useState('all');
+  const [requestsFilter, setRequestsFilter] = useState('open');
   const [currentUserEmail, setCurrentUserEmail] = useState('');
   const [requestDetailsOpen, setRequestDetailsOpen] = useState(false);
   const [selectedRequestDetails, setSelectedRequestDetails] = useState(null);
@@ -43,7 +44,7 @@ const VendorDashboard = () => {
   // Filter requests based on search and filters
   const filteredRequests = useMemo(() => {
     console.log('Filtering requests. Total requests:', requests.length);
-    console.log('Current filters:', { searchText, categoryFilter, proposalsFilter });
+    console.log('Current filters:', { searchText, categoryFilter, proposalsFilter, requestsFilter });
     
     const filtered = requests.filter(request => {
       const matchesSearch = !searchText || 
@@ -57,18 +58,29 @@ const VendorDashboard = () => {
       const matchesProposalsFilter = proposalsFilter === 'all' || 
         (proposalsFilter === 'withProposals' && hasMyProposals);
 
-      // Check for status case-insensitively
-      const isOpen = request.status?.toLowerCase() === 'open';
+      // Calculate if request is expired
+      const deadline = new Date(request.deadline);
+      const isExpired = deadline < new Date();
       
-      const shouldInclude = isOpen && matchesSearch && matchesCategory && matchesProposalsFilter;
+      // Match requests filter
+      let matchesRequestsFilter = true;
+      if (requestsFilter === 'open') {
+        matchesRequestsFilter = !isExpired && request.status?.toLowerCase() === 'open';
+      } else if (requestsFilter === 'expired') {
+        matchesRequestsFilter = isExpired;
+      }
+      // 'all' matches everything
+      
+      const shouldInclude = matchesSearch && matchesCategory && matchesProposalsFilter && matchesRequestsFilter;
       console.log('Request filtering:', {
         id: request.id,
         title: request.title,
         status: request.status,
-        isOpen,
+        isExpired,
         matchesSearch,
         matchesCategory,
         matchesProposalsFilter,
+        matchesRequestsFilter,
         shouldInclude
       });
       
@@ -77,7 +89,7 @@ const VendorDashboard = () => {
 
     console.log('Filtered requests:', filtered);
     return filtered;
-  }, [requests, searchText, categoryFilter, proposalsFilter, currentUserEmail]);
+  }, [requests, searchText, categoryFilter, proposalsFilter, requestsFilter, currentUserEmail]);
 
   const columns = [
     {
@@ -812,7 +824,7 @@ const VendorDashboard = () => {
 
         {activeTab === 0 ? (
           <>
-            <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+            <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
               <TextField
                 label="Search opportunities..."
                 variant="outlined"
@@ -821,26 +833,40 @@ const VendorDashboard = () => {
                 onChange={(e) => setSearchText(e.target.value)}
                 sx={{ flexGrow: 1 }}
               />
-              <FormControl size="small" sx={{ minWidth: 200 }}>
+              
+              <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel>Requests</InputLabel>
+                <Select
+                  value={requestsFilter}
+                  label="Requests"
+                  onChange={(e) => setRequestsFilter(e.target.value)}
+                >
+                  <MenuItem value="all">All Requests</MenuItem>
+                  <MenuItem value="open">Open Requests</MenuItem>
+                  <MenuItem value="expired">Expired Requests</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel>Category</InputLabel>
                 <Select
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
                   label="Category"
+                  onChange={(e) => setCategoryFilter(e.target.value)}
                 >
-                  {categories.map(cat => (
-                    <MenuItem key={cat} value={cat}>
-                      {cat === 'all' ? 'All Categories' : cat}
-                    </MenuItem>
+                  <MenuItem value="all">All Categories</MenuItem>
+                  {categories.filter(cat => cat !== 'all').map(category => (
+                    <MenuItem key={category} value={category}>{category}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
-              <FormControl size="small" sx={{ minWidth: 200 }}>
+
+              <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel>Proposals</InputLabel>
                 <Select
                   value={proposalsFilter}
-                  onChange={(e) => setProposalsFilter(e.target.value)}
                   label="Proposals"
+                  onChange={(e) => setProposalsFilter(e.target.value)}
                 >
                   <MenuItem value="all">All Requests</MenuItem>
                   <MenuItem value="withProposals">With My Proposals</MenuItem>
@@ -860,11 +886,9 @@ const VendorDashboard = () => {
                 NoRowsOverlay: CustomNoRowsOverlay
               }}
               sx={{
-                '& .MuiDataGrid-row': {
+                '& .MuiDataGrid-row:hover': {
                   cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: 'action.hover'
-                  }
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
                 }
               }}
             />
