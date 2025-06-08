@@ -168,13 +168,29 @@ router.delete('/:id', authenticateToken, (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
+    // Store the request before deleting it
+    const deletedRequest = sourcingRequests[index];
+    console.log('Deleting request:', deletedRequest);
+
+    // Remove the request from the array
     sourcingRequests.splice(index, 1);
-    saveSourcingRequests();
-    console.log('Deleted request:', sourcingRequests[index]);
-    res.status(204).send();
+    
+    // Save the updated array
+    try {
+      saveSourcingRequests();
+      console.log('Successfully deleted request and saved changes');
+      res.status(200).json({ message: 'Request deleted successfully', deletedRequest });
+    } catch (saveError) {
+      // If saving fails, add the request back to the array
+      sourcingRequests.splice(index, 0, deletedRequest);
+      throw saveError;
+    }
   } catch (error) {
     console.error('Error in DELETE /sourcing-requests/:id:', error);
-    res.status(500).json({ message: 'Error deleting sourcing request', error: error.message });
+    res.status(500).json({ 
+      message: 'Error deleting sourcing request',
+      error: error.message 
+    });
   }
 });
 

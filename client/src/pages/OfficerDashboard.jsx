@@ -285,6 +285,8 @@ const OfficerDashboard = () => {
   const handleDeleteConfirm = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Deleting request:', requestToDelete);
+      
       const response = await axios.delete(
         `${config.API_URL}/sourcing-requests/${requestToDelete.id}`,
         {
@@ -296,26 +298,37 @@ const OfficerDashboard = () => {
         }
       );
 
-      // Update local state for sourcingRequests
-      const updatedRequests = sourcingRequests.filter(req => req.id !== requestToDelete.id);
-      setSourcingRequests(updatedRequests);
+      console.log('Delete response:', response);
 
-      // Show notification
+      // Remove the request from the local state
+      setSourcingRequests(prev => prev.filter(req => req.id !== requestToDelete.id));
+      
       setSnackbar({
         open: true,
         message: 'Sourcing request deleted successfully',
         severity: 'success'
       });
-
-      // Close dialog
-      setDeleteDialogOpen(false);
     } catch (error) {
-      console.error('Error deleting sourcing request:', error);
+      console.error('Error deleting request:', error);
+      console.error('Response:', error.response);
+      
+      let errorMessage = 'Failed to delete sourcing request';
+      if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to delete this request';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Request not found';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       setSnackbar({
         open: true,
-        message: 'Failed to delete sourcing request',
+        message: errorMessage,
         severity: 'error'
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setRequestToDelete(null);
     }
   };
 
