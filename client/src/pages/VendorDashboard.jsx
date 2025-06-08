@@ -42,10 +42,10 @@ const VendorDashboard = () => {
 
   // Filter requests based on search and filters
   const filteredRequests = useMemo(() => {
-    console.log('Filtering requests:', requests);
+    console.log('Filtering requests. Total requests:', requests.length);
     console.log('Current filters:', { searchText, categoryFilter, proposalsFilter });
     
-    return requests.filter(request => {
+    const filtered = requests.filter(request => {
       const matchesSearch = !searchText || 
         request.title?.toLowerCase().includes(searchText.toLowerCase()) ||
         request.category?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -74,6 +74,9 @@ const VendorDashboard = () => {
       
       return shouldInclude;
     });
+
+    console.log('Filtered requests:', filtered);
+    return filtered;
   }, [requests, searchText, categoryFilter, proposalsFilter, currentUserEmail]);
 
   const columns = [
@@ -199,12 +202,26 @@ const VendorDashboard = () => {
 
   const fetchRequests = async () => {
     try {
-      const response = await axios.get(`${config.API_URL}/api/sourcing-requests`);
+      console.log('Fetching requests from:', `${config.API_URL}/sourcing-requests`);
+      const response = await axios.get(`${config.API_URL}/sourcing-requests`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      console.log('API Response:', response);
       console.log('Fetched requests:', response.data);
       console.log('Open requests:', response.data.filter(r => r.status?.toLowerCase() === 'open').length);
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        config: error.config
+      });
+      setSnackbarMessage('Error loading procurement requests. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
@@ -744,7 +761,9 @@ const VendorDashboard = () => {
         No Open Procurement Requests
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        There are currently no open procurement requests. Please check back later for new opportunities.
+        {requests.length === 0 
+          ? 'Loading procurement requests...' 
+          : 'There are currently no open procurement requests. Please check back later for new opportunities.'}
       </Typography>
     </Box>
   );

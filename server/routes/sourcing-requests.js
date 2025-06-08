@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('../middleware/auth');
 
 const SOURCING_REQUESTS_FILE = path.join(__dirname, '..', 'sourcing_requests.json');
 
@@ -28,23 +29,73 @@ const saveSourcingRequests = () => {
 };
 
 // Get all sourcing requests
-router.get('/', (req, res) => {
-  console.log('GET /api/sourcing-requests - Total requests:', sourcingRequests.length);
-  console.log('Open requests:', sourcingRequests.filter(r => r.status?.toLowerCase() === 'open').length);
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.json(sourcingRequests);
+router.get('/', authenticateToken, (req, res) => {
+  try {
+    console.log('GET /sourcing-requests');
+    console.log('User:', req.user);
+    
+    // Filter requests based on user role
+    let filteredRequests;
+    if (req.user.role === 'vendor') {
+      console.log('Filtering requests for vendor');
+      // Ensure case-insensitive status comparison
+      filteredRequests = sourcingRequests.filter(request => 
+        request.status?.toLowerCase() === 'open'
+      );
+      console.log(`Found ${filteredRequests.length} open requests out of ${sourcingRequests.length} total`);
+      console.log('Status values found:', sourcingRequests.map(r => r.status));
+    } else {
+      console.log('Returning all requests for procurement officer');
+      filteredRequests = sourcingRequests;
+    }
+
+    // Add cache control headers
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    console.log('Returning requests:', filteredRequests);
+    res.json(filteredRequests);
+  } catch (error) {
+    console.error('Error in GET /sourcing-requests:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
+    res.status(500).json({ message: 'Error fetching sourcing requests', error: error.message });
+  }
+});
+
+// Get a specific sourcing request
+router.get('/:id', authenticateToken, (req, res) => {
+  try {
+    console.log(`GET /sourcing-requests/${req.params.id}`);
+    const request = sourcingRequests.find(r => r.id === req.params.id);
+    if (!request) {
+      console.log('Request not found');
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    console.log('Returning request:', request);
+    res.json(request);
+  } catch (error) {
+    console.error('Error in GET /sourcing-requests/:id:', error);
+    res.status(500).json({ message: 'Error fetching sourcing request', error: error.message });
+  }
 });
 
 // Create a new sourcing request
-router.post('/', (req, res) => {
+router.post('/', authenticateToken, (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+    console.log('POST /sourcing-requests');
+    console.log('Request body:', req.body);
     
+    if (req.user.role !== 'procurement') {
+      console.log('Unauthorized - only procurement officers can create requests');
+      return res.status(403).json({ message: 'Only procurement officers can create requests' });
+    }
+
     const { title, category, description, quantity, deadline, requirements } = req.body;
     
     const newRequest = {
@@ -56,55 +107,74 @@ router.post('/', (req, res) => {
       deadline,
       requirements,
       status: 'open',
-      createdBy: decoded.email,
+      createdBy: req.user.email,
       createdAt: new Date().toISOString(),
       proposals: []
     };
 
     sourcingRequests.push(newRequest);
     saveSourcingRequests();
+    console.log('Created new request:', newRequest);
     res.status(201).json(newRequest);
   } catch (error) {
-    console.error('Error creating sourcing request:', error);
-    res.status(500).json({ message: 'Error creating sourcing request' });
+    console.error('Error in POST /sourcing-requests:', error);
+    res.status(500).json({ message: 'Error creating sourcing request', error: error.message });
   }
 });
 
 // Update a sourcing request
-router.put('/:id', (req, res) => {
+router.put('/:id', authenticateToken, (req, res) => {
   try {
+    console.log(`PUT /sourcing-requests/${req.params.id}`);
+    console.log('Request body:', req.body);
+    
+    if (req.user.role !== 'procurement') {
+      console.log('Unauthorized - only procurement officers can update requests');
+      return res.status(403).json({ message: 'Only procurement officers can update requests' });
+    }
+
     const { id } = req.params;
     const index = sourcingRequests.findIndex(r => r.id === id);
     
     if (index === -1) {
+      console.log('Request not found');
       return res.status(404).json({ message: 'Request not found' });
     }
 
     sourcingRequests[index] = { ...sourcingRequests[index], ...req.body };
     saveSourcingRequests();
+    console.log('Updated request:', sourcingRequests[index]);
     res.json(sourcingRequests[index]);
   } catch (error) {
-    console.error('Error updating sourcing request:', error);
-    res.status(500).json({ message: 'Error updating sourcing request' });
+    console.error('Error in PUT /sourcing-requests/:id:', error);
+    res.status(500).json({ message: 'Error updating sourcing request', error: error.message });
   }
 });
 
 // Delete a sourcing request
-router.delete('/:id', (req, res) => {
+router.delete('/:id', authenticateToken, (req, res) => {
   try {
+    console.log(`DELETE /sourcing-requests/${req.params.id}`);
+    if (req.user.role !== 'procurement') {
+      console.log('Unauthorized - only procurement officers can delete requests');
+      return res.status(403).json({ message: 'Only procurement officers can delete requests' });
+    }
+
     const { id } = req.params;
     const index = sourcingRequests.findIndex(r => r.id === id);
     
     if (index === -1) {
+      console.log('Request not found');
       return res.status(404).json({ message: 'Request not found' });
     }
 
     sourcingRequests.splice(index, 1);
     saveSourcingRequests();
+    console.log('Deleted request:', sourcingRequests[index]);
     res.status(204).send();
   } catch (error) {
-    console.error('Error deleting sourcing request:', error);
-    res.status(500).json({ message: 'Error deleting sourcing request' });
+    console.error('Error in DELETE /sourcing-requests/:id:', error);
+    res.status(500).json({ message: 'Error deleting sourcing request', error: error.message });
   }
 });
 

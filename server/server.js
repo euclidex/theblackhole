@@ -13,10 +13,14 @@ const allowedOrigins = {
 
 app.use(cors({
   origin: (origin, callback) => {
+    console.log('Incoming request from origin:', origin);
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     const allowed = allowedOrigins[process.env.NODE_ENV || 'development'];
+    console.log('Environment:', process.env.NODE_ENV || 'development');
+    console.log('Allowed origins:', allowed);
+    
     if (allowed.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
@@ -24,7 +28,9 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
@@ -33,6 +39,9 @@ app.use(express.json());
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
+  console.log(`Incoming ${req.method} request to ${req.url}`);
+  console.log('Headers:', req.headers);
+  
   res.on('finish', () => {
     const duration = Date.now() - start;
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
@@ -49,6 +58,12 @@ const proposalsRoutes = require('./routes/proposals');
 app.use('/api/auth', authRoutes);
 app.use('/api/sourcing-requests', sourcingRequestsRoutes);
 app.use('/api/proposals', proposalsRoutes);
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('Test endpoint hit');
+  res.json({ message: 'API is working' });
+});
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -83,7 +98,9 @@ app.use((err, req, res, next) => {
 // Port configuration
 const port = process.env.PORT || 5001;
 app.listen(port, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
+  const env = process.env.NODE_ENV || 'development';
+  console.log(`Server running in ${env} mode on port ${port}`);
+  console.log('CORS allowed origins:', allowedOrigins[env]);
   if (process.env.NODE_ENV === 'production') {
     console.log('Static files directory:', path.join(__dirname, '../client/build'));
   }

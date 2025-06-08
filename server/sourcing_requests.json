@@ -1,5 +1,44 @@
 [
   {
+    "id": "1",
+    "title": "Medical Supplies Procurement",
+    "category": "Medical Supplies",
+    "description": "Need various medical supplies including masks, gloves, and sanitizers",
+    "quantity": "1000 units each",
+    "deadline": "2024-05-01",
+    "requirements": "FDA approved, CE certified",
+    "status": "open",
+    "createdBy": "jon@example.com",
+    "createdAt": "2024-03-14T00:00:00.000Z",
+    "proposals": []
+  },
+  {
+    "id": "2",
+    "title": "Hospital Equipment Service",
+    "category": "Equipment",
+    "description": "Seeking vendors for regular maintenance of hospital equipment",
+    "quantity": "Monthly service",
+    "deadline": "2024-04-15",
+    "requirements": "ISO 13485 certified, 5+ years experience",
+    "status": "open",
+    "createdBy": "jon@example.com",
+    "createdAt": "2024-03-14T00:00:00.000Z",
+    "proposals": []
+  },
+  {
+    "id": "3",
+    "title": "Laboratory Supplies",
+    "category": "Lab Supplies",
+    "description": "Various laboratory supplies needed including test tubes, petri dishes, and microscope slides",
+    "quantity": "500 units each",
+    "deadline": "2024-04-30",
+    "requirements": "Medical grade, sterile packaging",
+    "status": "open",
+    "createdBy": "jon@example.com",
+    "createdAt": "2024-03-14T00:00:00.000Z",
+    "proposals": []
+  },
+  {
     "id": "1747837652001",
     "title": "Emergency Medical Supplies",
     "category": "Supplies",
