@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A procurement platform for hospitals",
   "main": "index.js",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "start": "node server/server.js",
     "server": "nodemon server/server.js",

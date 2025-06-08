@@ -7,39 +7,26 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
-// CORS configuration
-const allowedOrigins = {
-  production: ['https://theblackhole.onrender.com'],
-  development: ['http://localhost:3000']
-};
-
-app.use(cors({
-  origin: allowedOrigins[process.env.NODE_ENV || 'development']
-}));
+app.use(cors());
 
 // Import routes
 const authRoutes = require('./routes/auth');
 const sourcingRequestsRoutes = require('./routes/sourcing-requests');
 const proposalsRoutes = require('./routes/proposals');
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+}
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sourcing-requests', sourcingRequestsRoutes);
 app.use('/api/proposals', proposalsRoutes);
 
-// Serve static files in production
+// Serve React app for all other routes in production
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the React app
-  app.use(express.static(path.join(__dirname, '../client/build')));
-
-  // The "catchall" handler: for any request that doesn't
-  // match one above, send back the index.html file.
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
-  });
-  
-  app.get('/*', (req, res) => {
+  app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../client/build/index.html'));
   });
 }
