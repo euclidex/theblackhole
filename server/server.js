@@ -9,7 +9,7 @@ app.use(express.json());
 
 // CORS configuration
 const allowedOrigins = {
-  production: ['https://the-black-hole.onrender.com'],
+  production: ['https://theblackhole.onrender.com'],
   development: ['http://localhost:3000']
 };
 
@@ -22,10 +22,15 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('../client/build'));
 }
 
-// Import and use routes
-app.use('/api/sourcing-requests', require('./routes/sourcing-requests'));
-app.use('/api/proposals', require('./routes/proposals'));
-app.use('/api/auth', require('./routes/auth'));
+// Import routes
+const authRoutes = require('./routes/auth');
+const sourcingRequestsRoutes = require('./routes/sourcing-requests');
+const proposalsRoutes = require('./routes/proposals');
+
+// Use routes
+app.use('/api/auth', authRoutes);
+app.use('/api/sourcing-requests', sourcingRequestsRoutes);
+app.use('/api/proposals', proposalsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
