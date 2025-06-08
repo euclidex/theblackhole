@@ -701,16 +701,20 @@ const VendorDashboard = () => {
 
     const handleSubmit = async () => {
       try {
+        console.log('Submitting proposal:', {
+          requestId: request.id,
+          price: formData.price,
+          deliveryDate: formData.deliveryDate,
+          notes: formData.notes
+        });
+
         const response = await axios.post(
-          `${config.API_URL}/api/proposals`,
+          `${config.API_URL}/proposals`,
           {
-            ...formData,
             requestId: request.id,
-            vendorId: currentUserEmail,
-            status: 'Pending',
-            vendorName: currentUserEmail.split('@')[0],
-            submittedAt: new Date().toISOString(),
-            createdAt: new Date().toISOString()
+            price: formData.price,
+            deliveryDate: formData.deliveryDate,
+            notes: formData.notes
           },
           {
             headers: {
@@ -720,17 +724,17 @@ const VendorDashboard = () => {
           }
         );
         
+        console.log('Proposal submitted successfully:', response.data);
         handleClose();
         await fetchRequests();
         await fetchActiveProposals();
         
-        // Replace alert with Snackbar
         setSnackbarMessage('Proposal submitted successfully!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
       } catch (error) {
-        console.error('Error submitting proposal:', error);
-        setSnackbarMessage('Failed to submit proposal. Please try again.');
+        console.error('Error submitting proposal:', error.response?.data || error.message);
+        setSnackbarMessage(error.response?.data?.message || 'Failed to submit proposal. Please try again.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
