@@ -16,7 +16,7 @@ import {
   Chip
 } from '@mui/material';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 
 const categories = [
   'Medical Equipment',

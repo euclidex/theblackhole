@@ -21,7 +21,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 import CycloneIcon from '@mui/icons-material/Cyclone';
 
 const PROPOSAL_STATUSES = {

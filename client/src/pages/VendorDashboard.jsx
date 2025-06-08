@@ -9,7 +9,7 @@ import axios from 'axios';
 import SendIcon from '@mui/icons-material/Send';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
 import CycloneIcon from '@mui/icons-material/Cyclone';
 import config from '../config';
 
