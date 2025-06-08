@@ -33,8 +33,8 @@ if (process.env.NODE_ENV === 'production') {
   
   app.use(express.static(staticPath));
 
-  // The "catchall" handler: for any request that doesn't match one above, send back the index.html file.
-  app.get('*', (req, res) => {
+  // Handle React routing by serving index.html for non-API routes
+  app.get(/^(?!\/api).*/, (req, res) => {
     res.sendFile(path.join(staticPath, 'index.html'));
   });
 }
