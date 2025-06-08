@@ -36,11 +36,15 @@ const VendorDashboard = () => {
   // Get unique categories from requests
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(requests.map(req => req.category))];
+    console.log('Available categories:', uniqueCategories);
     return ['all', ...uniqueCategories];
   }, [requests]);
 
   // Filter requests based on search and filters
   const filteredRequests = useMemo(() => {
+    console.log('Filtering requests:', requests);
+    console.log('Current filters:', { searchText, categoryFilter, proposalsFilter });
+    
     return requests.filter(request => {
       const matchesSearch = !searchText || 
         request.title?.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -55,7 +59,20 @@ const VendorDashboard = () => {
 
       // Check for status case-insensitively
       const isOpen = request.status?.toLowerCase() === 'open';
-      return isOpen && matchesSearch && matchesCategory && matchesProposalsFilter;
+      
+      const shouldInclude = isOpen && matchesSearch && matchesCategory && matchesProposalsFilter;
+      console.log('Request filtering:', {
+        id: request.id,
+        title: request.title,
+        status: request.status,
+        isOpen,
+        matchesSearch,
+        matchesCategory,
+        matchesProposalsFilter,
+        shouldInclude
+      });
+      
+      return shouldInclude;
     });
   }, [requests, searchText, categoryFilter, proposalsFilter, currentUserEmail]);
 
@@ -172,6 +189,7 @@ const VendorDashboard = () => {
     if (token) {
       const decoded = jwtDecode(token);
       setCurrentUserEmail(decoded.email);
+      console.log('Current user email:', decoded.email);
     }
   }, []);
 
@@ -182,6 +200,8 @@ const VendorDashboard = () => {
   const fetchRequests = async () => {
     try {
       const response = await axios.get(`${config.API_URL}/api/sourcing-requests`);
+      console.log('Fetched requests:', response.data);
+      console.log('Open requests:', response.data.filter(r => r.status?.toLowerCase() === 'open').length);
       setRequests(response.data);
     } catch (error) {
       console.error('Error fetching requests:', error);

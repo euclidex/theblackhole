@@ -5,9 +5,30 @@ require('dotenv').config();
 
 const app = express();
 
+// CORS configuration
+const allowedOrigins = {
+  production: ['https://theblackhole.onrender.com'],
+  development: ['http://localhost:3000']
+};
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowed = allowedOrigins[process.env.NODE_ENV || 'development'];
+    if (allowed.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
 // Middleware
 app.use(express.json());
-app.use(cors());
 
 // Request logging middleware
 app.use((req, res, next) => {
