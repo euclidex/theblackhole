@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import jwtDecode from 'jwt-decode';
 import CycloneIcon from '@mui/icons-material/Cyclone';
+import config from '../config';
 
 const PROPOSAL_STATUSES = {
   PENDING: 'Pending',
@@ -99,7 +100,28 @@ const OfficerDashboard = () => {
 
   const fetchSourcingRequests = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/sourcing-requests');
+      console.log('Fetching sourcing requests from:', `${config.API_URL}/sourcing-requests`);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No token found');
+        setSnackbar({
+          open: true,
+          message: 'Authentication error. Please log in again.',
+          severity: 'error'
+        });
+        return;
+      }
+
+      const response = await axios.get(`${config.API_URL}/sourcing-requests`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      console.log('Response:', response);
       
       const requests = await Promise.all((response.data || []).map(async request => {
         const isExpired = request.deadline && new Date(request.deadline) < new Date();
@@ -114,19 +136,22 @@ const OfficerDashboard = () => {
         // If expired but status is still Open, update it on the server
         if (isExpired && request.status === 'Open') {
           try {
-            const token = localStorage.getItem('token');
-            
+            console.log(`Updating expired request ${request.id} status to Closed`);
             const updateResponse = await axios.put(
-              `http://localhost:5001/api/sourcing-requests/${request.id}/status`,
-              { status: 'Closed' },  // Changed from 'Expired' to 'Closed'
+              `${config.API_URL}/sourcing-requests/${request.id}/status`,
+              { status: 'Closed' },
               {
                 headers: {
-                  'Authorization': `Bearer ${token}`
+                  'Authorization': `Bearer ${token}`,
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache'
                 }
               }
             );
+            console.log('Update response:', updateResponse);
           } catch (error) {
-            console.error('Error updating request status:', error.response?.data || error.message);
+            console.error('Error updating request status:', error);
+            console.error('Response:', error.response);
           }
         }
         
@@ -135,18 +160,32 @@ const OfficerDashboard = () => {
           id: request.id || Date.now().toString(),
           proposals: Array.isArray(request.proposals) ? request.proposals : [],
           createdAt: request.createdAt || new Date().toISOString(),
-          status: isExpired ? 'Closed' : (request.status || 'Open'),  // Changed from 'Expired' to 'Closed'
+          status: isExpired ? 'Closed' : (request.status || 'Open'),
           deadline: request.deadline || null,
-          daysLeft: daysLeft  // Add this field
+          daysLeft: daysLeft
         };
       }));
       
+      console.log('Processed requests:', requests);
       setSourcingRequests(requests);
     } catch (error) {
       console.error('Error fetching requests:', error);
+      console.error('Response:', error.response);
+      console.error('Request config:', error.config);
+      
+      let errorMessage = 'Failed to fetch sourcing requests';
+      if (error.response?.status === 401) {
+        errorMessage = 'Session expired. Please log in again.';
+        // Redirect to login
+        localStorage.removeItem('token');
+        window.location.href = '/';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.';
+      }
+      
       setSnackbar({
         open: true,
-        message: 'Failed to fetch sourcing requests',
+        message: errorMessage,
         severity: 'error'
       });
     }
@@ -193,12 +232,15 @@ const OfficerDashboard = () => {
 
   const handleProposalAction = async (proposal, action) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.put(
-        `http://localhost:5001/api/proposals/${proposal.id}/status`,
+        `${config.API_URL}/proposals/${proposal.id}/status`,
         { status: action },
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           }
         }
       );
@@ -226,6 +268,7 @@ const OfficerDashboard = () => {
       });
     } catch (error) {
       console.error('Error updating proposal:', error);
+      console.error('Response:', error.response);
       setSnackbar({
         open: true,
         message: 'Failed to update proposal status',
@@ -241,11 +284,14 @@ const OfficerDashboard = () => {
 
   const handleDeleteConfirm = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.delete(
-        `http://localhost:5001/api/sourcing-requests/${requestToDelete.id}`,
+        `${config.API_URL}/sourcing-requests/${requestToDelete.id}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
           }
         }
       );
