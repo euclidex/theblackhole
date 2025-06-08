@@ -1,5 +1,17 @@
 services:
   - type: web
+    name: theblackhole
+    env: node
+    buildCommand: npm install && cd client && npm install && npm run build && cd ..
+    startCommand: node server/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+    staticPublishPath: ./client/build
+
+  - type: web
     name: the-black-hole-api
     env: node
     buildCommand: cd server && npm install
