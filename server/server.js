@@ -23,7 +23,7 @@ const authRoutes = require('./routes/auth');
 const sourcingRequestsRoutes = require('./routes/sourcing-requests');
 const proposalsRoutes = require('./routes/proposals');
 
-// Use routes
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/sourcing-requests', sourcingRequestsRoutes);
 app.use('/api/proposals', proposalsRoutes);
@@ -33,8 +33,13 @@ if (process.env.NODE_ENV === 'production') {
   // Serve static files from the React app
   app.use(express.static(path.join(__dirname, '../client/build')));
 
-  // Handle any requests that don't match the ones above
-  app.get('*', (req, res) => {
+  // The "catchall" handler: for any request that doesn't
+  // match one above, send back the index.html file.
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+  
+  app.get('/*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build/index.html'));
   });
 }
