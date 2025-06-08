@@ -1,14 +1,26 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
+
 const app = express();
 
 // Middleware
 app.use(express.json());
+
+// CORS configuration
+const allowedOrigins = {
+  production: ['https://the-black-hole.onrender.com'],
+  development: ['http://localhost:3000']
+};
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://the-black-hole.onrender.com']
-    : ['http://localhost:3000']
+  origin: allowedOrigins[process.env.NODE_ENV || 'development']
 }));
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('../client/build'));
+}
 
 // Import and use routes
 app.use('/api/sourcing-requests', require('./routes/sourcing-requests'));
@@ -21,8 +33,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Add port configuration for Render
+// Port configuration
 const port = process.env.PORT || 5001;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
 }); 

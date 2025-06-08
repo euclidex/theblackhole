@@ -1,7 +1,22 @@
 {
+  "name": "hospital-sourcing-platform",
+  "version": "1.0.0",
+  "description": "A procurement platform for hospitals",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "nodemon server/server.js",
+    "client": "cd client && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build",
+    "render-postbuild": "cd client && npm install && npm run build"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@mui/material": "^7.1.0"
+    "@mui/material": "^7.1.0",
+    "concurrently": "^8.0.1",
+    "nodemon": "^3.0.1"
   }
 }
