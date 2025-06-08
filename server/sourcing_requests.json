@@ -7,7 +7,7 @@
     "quantity": "1000 units each",
     "deadline": "2024-05-01",
     "requirements": "FDA approved, CE certified",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@example.com",
     "createdAt": "2024-03-14T00:00:00.000Z",
     "proposals": []
@@ -20,7 +20,7 @@
     "quantity": "Monthly service",
     "deadline": "2024-04-15",
     "requirements": "ISO 13485 certified, 5+ years experience",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@example.com",
     "createdAt": "2024-03-14T00:00:00.000Z",
     "proposals": []
@@ -33,7 +33,7 @@
     "quantity": "500 units each",
     "deadline": "2024-04-30",
     "requirements": "Medical grade, sterile packaging",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@example.com",
     "createdAt": "2024-03-14T00:00:00.000Z",
     "proposals": []
@@ -46,7 +46,7 @@
     "quantity": "50",
     "deadline": "2025-07-16T00:00:00.000Z",
     "requirements": "Must meet ISO standards",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T14:27:32.545Z",
     "proposals": [
@@ -176,7 +176,7 @@
     "quantity": "25",
     "deadline": "2025-08-01",
     "requirements": "CE certification required",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T15:27:32.545Z",
     "proposals": []
@@ -189,7 +189,7 @@
     "quantity": "10",
     "deadline": "2025-07-30",
     "requirements": "FDA approved products only",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T16:27:32.545Z",
     "proposals": []
@@ -202,7 +202,7 @@
     "quantity": "100",
     "deadline": "2025-06-30",
     "requirements": "Warranty minimum 2 years",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T17:27:32.545Z",
     "proposals": [
@@ -240,7 +240,7 @@
     "quantity": "15",
     "deadline": "2025-09-15",
     "requirements": "Real-time monitoring capabilities required",
-    "status": "open",
+    "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T18:27:32.545Z",
     "proposals": []
