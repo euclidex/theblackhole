@@ -53,8 +53,9 @@ const VendorDashboard = () => {
       const matchesProposalsFilter = proposalsFilter === 'all' || 
         (proposalsFilter === 'withProposals' && hasMyProposals);
 
-      // Only show Open requests
-      return request.status === 'Open' && matchesSearch && matchesCategory && matchesProposalsFilter;
+      // Check for status case-insensitively
+      const isOpen = request.status?.toLowerCase() === 'open';
+      return isOpen && matchesSearch && matchesCategory && matchesProposalsFilter;
     });
   }, [requests, searchText, categoryFilter, proposalsFilter, currentUserEmail]);
 
@@ -706,103 +707,66 @@ const VendorDashboard = () => {
     }
   };
 
+  // Custom "No rows" overlay component
+  const CustomNoRowsOverlay = () => (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+        padding: '2rem',
+        textAlign: 'center'
+      }}
+    >
+      <Typography variant="h6" color="text.secondary" gutterBottom>
+        No Open Procurement Requests
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        There are currently no open procurement requests. Please check back later for new opportunities.
+      </Typography>
+    </Box>
+  );
+
   return (
-    <>
-      <AppBar position="static" 
-        sx={{ 
-          background: `
-            radial-gradient(circle at center,
-              #666666 0%,
-              #4a4a4a 50%,
-              #333333 100%
-            ),
-            linear-gradient(45deg,
-              rgba(255,255,255,0.1) 0%,
-              rgba(255,255,255,0.05) 100%
-            )
-          `,
-          backgroundBlend: 'overlay',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-          borderBottom: '3px solid #1976d2'  // Material-UI's default blue
-        }}
-      >
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center',
-          }}>
-            <CycloneIcon sx={{ fontSize: 28, mr: 1 }} />
-            <Typography variant="h6">
-              The Black Hole
-            </Typography>
-          </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'flex-end',
-            ml: 'auto'  // Push to the right
-          }}>
-            <Typography variant="body2" sx={{ mr: 2, color: 'inherit' }}>
-              {currentUserEmail}
-            </Typography>
-            <Button color="inherit" onClick={handleLogout} startIcon={<LogoutIcon />}>
-              Logout
-            </Button>
-          </Box>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <AppBar position="static">
+        <Toolbar>
+          <CycloneIcon sx={{ mr: 2 }} />
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            The Black Hole
+          </Typography>
+          <Typography variant="body1" sx={{ mr: 2 }}>
+            {currentUserEmail}
+          </Typography>
+          <Button 
+            color="inherit" 
+            onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+          >
+            LOGOUT
+          </Button>
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 4 }}>
-        <Box sx={{ mb: 3 }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={handleTabChange}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab 
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span>Open Procurement Requests</span>
-                  <Chip 
-                    label={filteredRequests.length} 
-                    size="small"
-                    sx={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                      color: 'text.secondary',
-                      height: '20px'
-                    }}
-                  />
-                </Box>
-              } 
-            />
-            <Tab 
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span>Sent Proposals</span>
-                  <Chip 
-                    label={activeProposals.length} 
-                    size="small"
-                    color="primary"
-                    sx={{ height: '20px' }}
-                  />
-                </Box>
-              } 
-            />
-          </Tabs>
-        </Box>
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
+        <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
+          <Tab label={`OPEN PROCUREMENT REQUESTS (${filteredRequests.length})`} />
+          <Tab label={`SENT PROPOSALS (${activeProposals.length})`} />
+        </Tabs>
 
         {activeTab === 0 ? (
-          <Paper sx={{ width: '100%', mb: 2 }}>
-            <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <>
+            <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
               <TextField
+                label="Search opportunities..."
+                variant="outlined"
                 size="small"
-                placeholder="Search opportunities..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                sx={{ flex: 1 }}
+                sx={{ flexGrow: 1 }}
               />
-
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -810,15 +774,13 @@ const VendorDashboard = () => {
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   label="Category"
                 >
-                  <MenuItem value="all">All Categories</MenuItem>
-                  {categories.filter(cat => cat !== 'all').map(category => (
-                    <MenuItem key={category} value={category}>
-                      {category}
+                  {categories.map(cat => (
+                    <MenuItem key={cat} value={cat}>
+                      {cat === 'all' ? 'All Categories' : cat}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-
               <FormControl size="small" sx={{ minWidth: 200 }}>
                 <InputLabel>Proposals</InputLabel>
                 <Select
@@ -836,50 +798,58 @@ const VendorDashboard = () => {
               rows={filteredRequests}
               columns={columns}
               pageSize={10}
-              rowsPerPageOptions={[10, 25, 50]}
+              rowsPerPageOptions={[10]}
               disableSelectionOnClick
               autoHeight
               onRowClick={handleRowClick}
+              components={{
+                NoRowsOverlay: CustomNoRowsOverlay
+              }}
               sx={{
-                '& .MuiDataGrid-cell': {
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  cursor: 'pointer'  // Add pointer cursor to show clickable rows
+                '& .MuiDataGrid-row': {
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
                 }
               }}
             />
-          </Paper>
+          </>
         ) : (
           <ActiveProposals />
         )}
+      </Container>
 
-        <RequestDetailsDialog 
+      {requestDetailsOpen && selectedRequestDetails && (
+        <RequestDetailsDialog
           open={requestDetailsOpen}
           onClose={() => setRequestDetailsOpen(false)}
           request={selectedRequestDetails}
         />
-        <ProposalDialog 
+      )}
+
+      {proposalDialogOpen && selectedRequest && (
+        <ProposalDialog
           open={proposalDialogOpen}
           onClose={() => setProposalDialogOpen(false)}
           request={selectedRequest}
         />
+      )}
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert 
+          onClose={() => setSnackbarOpen(false)} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
         >
-          <Alert 
-            onClose={() => setSnackbarOpen(false)} 
-            severity={snackbarSeverity}
-            sx={{ width: '100%' }}
-          >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 

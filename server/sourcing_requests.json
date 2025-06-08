@@ -7,7 +7,7 @@
     "quantity": "50",
     "deadline": "2025-07-16T00:00:00.000Z",
     "requirements": "Must meet ISO standards",
-    "status": "Open",
+    "status": "open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T14:27:32.545Z",
     "proposals": [
@@ -137,7 +137,7 @@
     "quantity": "25",
     "deadline": "2025-08-01",
     "requirements": "CE certification required",
-    "status": "Open",
+    "status": "open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T15:27:32.545Z",
     "proposals": []
@@ -150,7 +150,7 @@
     "quantity": "10",
     "deadline": "2025-07-30",
     "requirements": "FDA approved products only",
-    "status": "Open",
+    "status": "open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T16:27:32.545Z",
     "proposals": []
@@ -163,7 +163,7 @@
     "quantity": "100",
     "deadline": "2025-06-30",
     "requirements": "Warranty minimum 2 years",
-    "status": "Open",
+    "status": "open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T17:27:32.545Z",
     "proposals": [
@@ -199,9 +199,9 @@
     "category": "Medical Equipment",
     "description": "Advanced patient monitoring systems for ICU",
     "quantity": "15",
-    "deadline": "2025-08-15",
-    "requirements": "Training and support included",
-    "status": "Open",
+    "deadline": "2025-09-15",
+    "requirements": "Real-time monitoring capabilities required",
+    "status": "open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T18:27:32.545Z",
     "proposals": []
@@ -268,6 +268,19 @@
     "status": "Open",
     "createdBy": "jon@email.com",
     "createdAt": "2024-05-21T23:27:32.545Z",
+    "proposals": []
+  },
+  {
+    "id": "1749410829437",
+    "title": "New Request for toilet paper",
+    "category": "Supplies",
+    "description": "We need 500 rolls",
+    "quantity": "500",
+    "deadline": "2025-06-30T00:00:00.000Z",
+    "requirements": "The should be white",
+    "status": "Open",
+    "createdAt": "2025-06-08T19:27:09.437Z",
+    "createdBy": "jon@email.com",
     "proposals": []
   }
 ]
