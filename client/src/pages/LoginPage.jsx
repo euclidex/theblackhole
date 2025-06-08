@@ -6,12 +6,14 @@ import {
   Stack 
 } from '@mui/material';
 import LoginIcon from '@mui/icons-material/Login';
+import config from '../config';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Check for message in URL
@@ -24,9 +26,14 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
     try {
       console.log('Attempting login with:', { email, password: '***' });
-      const res = await axios.post('http://localhost:5001/login', { email, password });
+      console.log('Login URL:', `${config.API_URL}/auth/login`);
+      
+      const res = await axios.post(`${config.API_URL}/auth/login`, { email, password });
       const { token, role, name } = res.data;
       
       console.log('Login response data:', { token: '...', role, name });
@@ -49,10 +56,26 @@ const LoginPage = () => {
         navigate('/vendor-dashboard');
       } else {
         console.warn('Unknown role:', role);
+        setError('Invalid user role received');
       }
     } catch (err) {
-      console.error('Login error:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Login error:', err);
+      console.error('Response:', err.response);
+      console.error('Request config:', err.config);
+      
+      if (err.response?.status === 401) {
+        setError('Invalid email or password');
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (!navigator.onLine) {
+        setError('No internet connection. Please check your network.');
+      } else if (err.code === 'ECONNABORTED') {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,13 +125,18 @@ const LoginPage = () => {
             </Alert>
           )}
 
-          <Stack spacing={3}>
+          <Stack spacing={3} component="form" onSubmit={handleSubmit}>
             <TextField
               label="Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               fullWidth
+              required
+              autoComplete="email"
+              inputProps={{
+                autoCapitalize: 'none'
+              }}
             />
             <TextField
               label="Password"
@@ -116,18 +144,22 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               fullWidth
+              required
+              autoComplete="current-password"
             />
             <Button
               variant="contained"
               size="large"
-              onClick={handleSubmit}
+              type="submit"
               startIcon={<LoginIcon />}
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
             <Button
               variant="text"
               onClick={() => navigate('/register')}
+              disabled={isLoading}
             >
               Don't have an account? Register
             </Button>
