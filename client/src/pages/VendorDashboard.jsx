@@ -403,15 +403,19 @@ const VendorDashboard = () => {
             requestId: request.id,
             requestTitle: request.title,
             requestCategory: request.category,
-            requestDeadline: request.deadline
+            requestDeadline: request.deadline,
+            requestStatus: request.status // Add request status
           }));
           
         if (myProposals?.length > 0) {
-          console.log(`Found ${myProposals.length} proposals for request "${request.title}"`);
+          console.log(`Found ${myProposals.length} proposals for request "${request.title}" (${request.status})`);
         }
         
         return [...acc, ...(myProposals || [])];
       }, []);
+
+      // Sort proposals by submission date, newest first
+      allProposals.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 
       console.log('Total proposals found:', allProposals.length);
       setActiveProposals(allProposals);
@@ -482,16 +486,28 @@ const VendorDashboard = () => {
           width: '100%', 
           height: '100%', 
           display: 'flex', 
-          alignItems: 'center' 
+          alignItems: 'center',
+          flexDirection: 'column',
+          justifyContent: 'center'
         }}>
           <Typography
             variant="body2"
             sx={{
               overflow: 'hidden',
-              textOverflow: 'ellipsis'
+              textOverflow: 'ellipsis',
+              width: '100%'
             }}
           >
             {params.value}
+          </Typography>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{
+              width: '100%'
+            }}
+          >
+            Request Status: {params.row.requestStatus}
           </Typography>
         </Box>
       )
@@ -969,6 +985,7 @@ const VendorDashboard = () => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert 
           onClose={() => setSnackbarOpen(false)} 

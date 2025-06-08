@@ -38,11 +38,12 @@ router.get('/', authenticateToken, (req, res) => {
     let filteredRequests;
     if (req.user.role === 'vendor') {
       console.log('Filtering requests for vendor');
-      // Ensure case-insensitive status comparison
+      // Return requests that are either open or have proposals from this vendor
       filteredRequests = sourcingRequests.filter(request => 
-        request.status?.toLowerCase() === 'open'
+        request.status?.toLowerCase() === 'open' ||
+        request.proposals?.some(p => p.vendorId === req.user.email)
       );
-      console.log(`Found ${filteredRequests.length} open requests out of ${sourcingRequests.length} total`);
+      console.log(`Found ${filteredRequests.length} relevant requests out of ${sourcingRequests.length} total`);
       console.log('Status values found:', sourcingRequests.map(r => r.status));
     } else {
       console.log('Returning all requests for procurement officer');
