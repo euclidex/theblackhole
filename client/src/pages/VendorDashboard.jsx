@@ -383,45 +383,92 @@ const VendorDashboard = () => {
 
   const fetchActiveProposals = async () => {
     try {
-      const response = await axios.get(`${config.API_URL}/api/sourcing-requests`);
+      console.log('Fetching active proposals for vendor:', currentUserEmail);
+      const response = await axios.get(`${config.API_URL}/sourcing-requests`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      console.log('Got sourcing requests:', response.data);
+      
       const allProposals = response.data.reduce((acc, request) => {
         const myProposals = request.proposals
           ?.filter(p => p.vendorId === currentUserEmail)
           .map(p => ({
             ...p,
-            id: p.id,
+            id: p.id || `${request.id}_${Date.now()}`, // Ensure unique ID
+            requestId: request.id,
             requestTitle: request.title,
-            requestCategory: request.category
+            requestCategory: request.category,
+            requestDeadline: request.deadline
           }));
+          
+        if (myProposals?.length > 0) {
+          console.log(`Found ${myProposals.length} proposals for request "${request.title}"`);
+        }
+        
         return [...acc, ...(myProposals || [])];
       }, []);
+
+      console.log('Total proposals found:', allProposals.length);
       setActiveProposals(allProposals);
     } catch (error) {
       console.error('Error fetching proposals:', error);
+      console.error('Response:', error.response);
+      setSnackbarMessage('Error loading proposals. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
   useEffect(() => {
     if (currentUserEmail) {
+      console.log('Current user email changed, fetching proposals for:', currentUserEmail);
       fetchActiveProposals();
     }
   }, [currentUserEmail]);
 
   // Add filtered proposals logic
   const filteredActiveProposals = useMemo(() => {
-    return activeProposals.filter(proposal => {
+    console.log('Filtering proposals:', {
+      total: activeProposals.length,
+      searchText: proposalsSearchText,
+      categoryFilter: proposalsCategoryFilter,
+      statusFilter: proposalsStatusFilter
+    });
+
+    const filtered = activeProposals.filter(proposal => {
       const matchesSearch = !proposalsSearchText || 
         proposal.requestTitle?.toLowerCase().includes(proposalsSearchText.toLowerCase()) ||
-        proposal.requestCategory?.toLowerCase().includes(proposalsSearchText.toLowerCase());
+        proposal.requestCategory?.toLowerCase().includes(proposalsSearchText.toLowerCase()) ||
+        proposal.notes?.toLowerCase().includes(proposalsSearchText.toLowerCase());
       
       const matchesCategory = proposalsCategoryFilter === 'all' || 
         proposal.requestCategory === proposalsCategoryFilter;
         
       const matchesStatus = proposalsStatusFilter === 'all' || 
-        proposal.status === proposalsStatusFilter;
+        proposal.status?.toLowerCase() === proposalsStatusFilter?.toLowerCase();
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      const shouldInclude = matchesSearch && matchesCategory && matchesStatus;
+      
+      if (!shouldInclude) {
+        console.log('Filtering out proposal:', {
+          id: proposal.id,
+          requestTitle: proposal.requestTitle,
+          matchesSearch,
+          matchesCategory,
+          matchesStatus
+        });
+      }
+
+      return shouldInclude;
     });
+
+    console.log('Filtered proposals:', filtered.length);
+    return filtered;
   }, [activeProposals, proposalsSearchText, proposalsCategoryFilter, proposalsStatusFilter]);
 
   // Add proposal columns definition
@@ -818,7 +865,7 @@ const VendorDashboard = () => {
 
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
         <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-          <Tab label={`OPEN PROCUREMENT REQUESTS (${filteredRequests.length})`} />
+          <Tab label={`PROCUREMENT REQUESTS (${filteredRequests.length})`} />
           <Tab label={`SENT PROPOSALS (${activeProposals.length})`} />
         </Tabs>
 
