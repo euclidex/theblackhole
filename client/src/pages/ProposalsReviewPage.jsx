@@ -36,6 +36,7 @@ import {
   GridToolbar,
 } from '@mui/x-data-grid';
 import { PROPOSAL_STATUSES } from '../constants';  // We should move this to a constants file
+import config from '../config';
 
 export default function ProposalsReviewPage() {
   const { requestId } = useParams();
@@ -59,7 +60,11 @@ export default function ProposalsReviewPage() {
   useEffect(() => {
     const fetchRequest = async () => {
       try {
-        const response = await axios.get(`http://localhost:5001/api/sourcing-requests/${requestId}`);
+        const response = await axios.get(`${config.API_URL}/sourcing-requests/${requestId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setRequest(response.data);
       } catch (error) {
         console.error('Error fetching request:', error);
@@ -214,7 +219,7 @@ export default function ProposalsReviewPage() {
     const { proposal, action } = confirmationDialog;
     try {
       const response = await axios.put(
-        `http://localhost:5001/api/proposals/${proposal.id}/status`,
+        `${config.API_URL}/proposals/${proposal.id}/status`,
         { status: action },
         {
           headers: {
@@ -224,7 +229,14 @@ export default function ProposalsReviewPage() {
       );
 
       // Refresh the request data to get updated proposals
-      const updatedRequest = await axios.get(`http://localhost:5001/api/sourcing-requests/${requestId}`);
+      const updatedRequest = await axios.get(
+        `${config.API_URL}/sourcing-requests/${requestId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       setRequest(updatedRequest.data);
     } catch (error) {
       console.error('Error updating proposal:', error);
