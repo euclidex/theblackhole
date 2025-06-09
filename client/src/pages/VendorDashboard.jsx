@@ -883,15 +883,30 @@ const VendorDashboard = () => {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-        <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-          <Tab label={`PROCUREMENT REQUESTS (${filteredRequests.length})`} />
-          <Tab label={`SENT PROPOSALS (${activeProposals.length})`} />
-        </Tabs>
+      <Container maxWidth="xl" sx={{ mt: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Vendor Dashboard
+        </Typography>
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTab-root': {
+                minWidth: 120,
+                fontWeight: 'bold',
+              }
+            }}
+          >
+            <Tab label="PROCUREMENT REQUESTS" />
+            <Tab label="SENT PROPOSALS" />
+          </Tabs>
+        </Box>
 
         {activeTab === 0 ? (
           <>
-            <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
               <TextField
                 label="Search opportunities..."
                 variant="outlined"
