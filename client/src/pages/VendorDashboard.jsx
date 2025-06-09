@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Container, Typography, Button, Box, Paper, TextField, FormControl, 
-  InputLabel, Select, MenuItem, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Tabs, Tab, Card, CardContent, CardActions, Snackbar, Alert
+  InputLabel, Select, MenuItem, AppBar, Toolbar, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Tabs, Tab, Card, CardContent, CardActions, Snackbar, Alert, List, ListItem, ListItemText
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +33,8 @@ const VendorDashboard = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [selectedProposalDetails, setSelectedProposalDetails] = useState(null);
+  const [proposalDetailsOpen, setProposalDetailsOpen] = useState(false);
 
   // Get unique categories from requests
   const categories = useMemo(() => {
@@ -573,7 +575,11 @@ const VendorDashboard = () => {
           variant="outlined"
           size="small"
           startIcon={<VisibilityIcon />}
-          onClick={() => navigate(`/requests/${params.row.requestId}/my-proposals`)}
+          onClick={() => {
+            const request = requests.find(r => r.id === params.row.requestId);
+            setSelectedProposalDetails({ ...params.row, request });
+            setProposalDetailsOpen(true);
+          }}
         >
           View Details
         </Button>
@@ -847,6 +853,132 @@ const VendorDashboard = () => {
     </Box>
   );
 
+  // Add this new component before the return statement
+  const ProposalDetailsDialog = ({ proposal, request, onClose }) => {
+    if (!proposal || !request) return null;
+
+    return (
+      <Dialog
+        open={Boolean(proposal)}
+        onClose={onClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6">
+              Proposal Details
+            </Typography>
+            <Chip 
+              label={proposal.status}
+              color={
+                proposal.status === 'Shortlisted' ? 'success' :
+                proposal.status === 'Rejected' ? 'error' :
+                'default'
+              }
+            />
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {/* Request Details */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom color="primary">
+              Request Information
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Title
+                </Typography>
+                <Typography variant="body1">
+                  {request.title}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Category
+                </Typography>
+                <Typography variant="body1">
+                  {request.category}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Status
+                </Typography>
+                <Typography variant="body1">
+                  {request.status}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Deadline
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(request.deadline).toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Proposal Details */}
+          <Box>
+            <Typography variant="h6" gutterBottom color="primary">
+              Proposal Information
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Price
+                </Typography>
+                <Typography variant="body1">
+                  ${proposal.price}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Delivery Date
+                </Typography>
+                <Typography variant="body1">
+                  {new Date(proposal.deliveryDate).toLocaleDateString()}
+                </Typography>
+              </Box>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Notes
+                </Typography>
+                <Typography variant="body1">
+                  {proposal.notes}
+                </Typography>
+              </Box>
+            </Box>
+
+            {proposal.statusHistory && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Status History
+                </Typography>
+                <List dense>
+                  {proposal.statusHistory.map((history, historyIndex) => (
+                    <ListItem key={historyIndex} sx={{ px: 0 }}>
+                      <ListItemText
+                        primary={history.status}
+                        secondary={`Updated by ${history.updatedBy} on ${new Date(history.updatedAt).toLocaleString()}`}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="static" sx={{
@@ -993,6 +1125,17 @@ const VendorDashboard = () => {
           open={proposalDialogOpen}
           onClose={() => setProposalDialogOpen(false)}
           request={selectedRequest}
+        />
+      )}
+
+      {proposalDetailsOpen && selectedProposalDetails && (
+        <ProposalDetailsDialog
+          proposal={selectedProposalDetails}
+          request={selectedProposalDetails.request}
+          onClose={() => {
+            setProposalDetailsOpen(false);
+            setSelectedProposalDetails(null);
+          }}
         />
       )}
 
